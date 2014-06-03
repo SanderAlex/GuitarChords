@@ -6,10 +6,7 @@ $(document).ready(function() {
 
 	var canvas = document.getElementById('chordCanvas');
     var context = canvas.getContext('2d');
-    var unitX;
-    var unitY;
-    var chord;
-    var chordVar, currentChord, currentChordIndex, chordGrid, fingers;
+    var unitX, unitY, chord, chordVar, currentChord, currentChordIndex, chordGrid;
 
     var stringSounds = new Array;
 
@@ -100,11 +97,9 @@ $(document).ready(function() {
 
     function setArray() {
         currentChord = chordVar[currentChordIndex];
-        chordGrid = currentChord[0];
-        fingers = currentChord[1];
+        chordGrid = currentChord;
         buildChord();
-        drawFinger(chordGrid, fingers);
-        drawNotes();
+        drawFinger(chordGrid, false);
         chordCheck();       
     }
 
@@ -119,7 +114,7 @@ $(document).ready(function() {
             context.beginPath();
             context.moveTo(unitX, unitY);
             context.lineTo(unitX*6, unitY);
-            context.lineWidth = unitX/10;
+            context.lineWidth = unitX/8;
             context.stroke();
             context.lineWidth = 1;
         }
@@ -149,9 +144,11 @@ $(document).ready(function() {
         context.stroke();
     }
 
-    function drawFinger(arr, fing) {
+    function drawFinger(arr, mini) {
         var tab = 0;
         var min = 0;
+        var note;
+        var noteY;
         var max = Math.max.apply(Math, arr);
         //проверяем позицию
         if(max > 5) {
@@ -165,50 +162,34 @@ $(document).ready(function() {
         drawGuitar(min, max);
 
         for(i = 0; i < arr.length; i++) {
-            //отрисовка баре
-            if(fing[i] != null) {
-                for(j = i + 1; j < fing.length; j++) {
-                    if(fing[i] == fing[j]) {
-                        context.beginPath();
-                        context.moveTo(unitX*i + unitX, (arr[i] - tab)*unitY + unitY - unitY/2);
-                        context.lineTo(unitX*j + unitX, (arr[i] - tab)*unitY + unitY - unitY/2);
-                        context.lineWidth = unitY/3*2;
-                        context.stroke();
-                    }
-                }
-            }
-            context.lineWidth = 1;
             //отрисовка позиций пальцев
             if(arr[i] == null)
                 drawCross(i + 1);
             else {
+                context.font = unitY*0.3 + "px Arial";
+                context.textAlign = "center";
+                context.fillStyle = "#000";
                 if(arr[i] == 0) {
                     context.beginPath();
                     context.arc(unitX*i + unitX, unitY/2, unitY/3, 0, Math.PI*2, false);
-                    context.stroke();                
+                    context.stroke(); 
+                    context.fillStyle = "#000";
+                    noteY = unitY/1.75;              
                 }
                 else {
                     context.beginPath();
                     context.arc(unitX*i + unitX, (arr[i] - tab)*unitY + unitY - unitY/2, unitY/3, 0, Math.PI*2, false);
                     context.fill();
-                    context.font = unitY*0.5 + "px Arial";
-                    context.textAlign = "center";
                     context.fillStyle = "#fff";
-                    context.fillText(fing[i], unitX*i + unitX, (arr[i] - tab)*unitY + unitY - unitY/3, unitX*0.6);
-                    context.fillStyle = "#000";
+                    noteY = (arr[i] - tab)*unitY + unitY - unitY/2.5;
+                }
+                if(!mini) {
+                    note = strings[i][0];
+                    if(strings[i][1] == "d")
+                        note += "#";
+                    context.fillText(note, unitX*i + unitX, noteY, unitX*0.6);
                 }
             }    
-        }
-    }
-
-    function drawNotes() {
-        for(i = 0; i < strings.length; i++) {
-            if (strings[i] != null) {
-                var note = strings[i][0];
-                if(strings[i][1] == "d")
-                    note += "#";
-                context.fillText(note, unitX*i + unitX, unitY*6.5, unitX*0.6);
-            }
         }
     }
 
@@ -223,13 +204,13 @@ $(document).ready(function() {
             miniCanvas.height = miniCanvas.width;
             unitX = miniCanvas.width/7;
             unitY = miniCanvas.height/7;
-            drawFinger(chordVar[i][0], chordVar[i][1]);
+            drawFinger(chordVar[i], true);
         }
         $('#' + currentChordIndex).addClass("picked");
         $(".canvasMini").tap(function() {
             currentChordIndex = this.id;
             setArray();
-            $.mobile.changePage("#mainPage");
+            $.mobile.changePage("#mainPage", {transition: "pop"});
         });
         context = canvas.getContext('2d');
         unitX = canvas.width/7;
